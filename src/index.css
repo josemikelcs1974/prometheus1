@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg-main: #050508;
+  --color-bg-secondary: #0d0d14;
+  --color-bg-tertiary: #12121c;
+  --color-green-neon: #00ff88;
+  --color-red-neon: #ff3366;
+  --color-orange-neon: #ffaa00;
+  --color-border-dim: #1a1a2e;
+  
+  --font-mono: 'Courier New', 'Lucida Console', monospace;
+}
+
+@layer base {
+  html, body, #root {
+    @apply bg-bg-main text-[#e8e8f0] font-mono h-full overflow-hidden;
+  }
+}
+
+.prometheus-card {
+  @apply bg-bg-secondary border border-border-dim rounded p-4 mb-2;
+}
+
+.prometheus-divider {
+  @apply h-[1px] my-5;
+  background: linear-gradient(to right, transparent, rgba(0, 255, 136, 0.2), transparent);
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050508;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a1a2e;
+  border-radius: 2px;
+}
