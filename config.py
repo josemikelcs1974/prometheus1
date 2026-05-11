@@ -12,10 +12,10 @@
 # SECCIÓN 1 — IDENTIDAD DEL SISTEMA
 # ══════════════════════════════════════════════════════════════════════
 
-SYSTEM_NAME    = "PROMETHEUS"
-SYSTEM_SUBTITLE= "ETF Rotation Intelligence System"
-SYSTEM_VERSION = "2.0.0"
-PYTHON_TARGET  = "3.12"
+SYSTEM_NAME     = "PROMETHEUS"
+SYSTEM_SUBTITLE = "ETF Rotation Intelligence System"
+SYSTEM_VERSION  = "2.0.0"
+PYTHON_TARGET   = "3.12"
 
 # ══════════════════════════════════════════════════════════════════════
 # SECCIÓN 2 — UNIVERSO DE ETFs POR SECTOR
@@ -193,7 +193,7 @@ CYCLE_PHASES: dict[int, dict] = {
         "icon":          "💀",
         "top_sectors":   ["ALTERNATIVES", "UTILITIES", "CONSUMER_STAPLES"],
         "neutral":       ["HEALTHCARE"],
-        "avoid_sectors": ["TECHNOLOGY", "FINANCIALS", "ENERGY",
+        "avoid_sectors": ["TECHNOLOGY", "FINANCIALS", "ENERGY", 
                           "INDUSTRIALS", "MATERIALS", "CONSUMER_DISC"],
         "description":   "Capitulación. Mínimos de mercado. QE y política fiscal máxima.",
         "macro_signals": ["VIX > 40", "Fed en 0%", "GDP cayendo"],
