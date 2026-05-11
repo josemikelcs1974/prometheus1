@@ -1,6 +1,6 @@
 {
-  "name": "PROMETHEUS",
-  "description": "Institutional multi-agent AI system for ETF portfolio rotation.",
+  "name": "⚡ PROMETHEUS",
+  "description": "PROMETHEUS — ETF Rotation Intelligence System. Institutional-grade financial dashboard with multi-agent coordination.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
