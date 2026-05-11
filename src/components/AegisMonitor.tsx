@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal } from 'lucide-react';
 
 interface LogEntry {
   timestamp: string;
