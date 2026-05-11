@@ -179,10 +179,34 @@ const App: React.FC = () => {
             </div>
           </div>
 
+          {/* AEGIS LIVE MONITORING - Added for Institutional Grade */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0 }}
+            className="mt-8 bg-[#08080c] border border-[#1a1a2e] rounded p-4 font-mono"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-[#00ff88] text-[0.65rem] flex items-center gap-2">
+                <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-pulse" />
+                AEGIS SYSTEM LOGS [LIVE]
+              </div>
+              <div className="text-[#444466] text-[0.6rem]">TERMINAL 01/CORE</div>
+            </div>
+            <div className="h-40 overflow-y-auto space-y-1 text-[0.7rem] text-[#00ff88]/70 leading-relaxed scrollbar-hide">
+              <div>[{new Date().toISOString()}] PROMETHEUS Core Interface v2.0.0 Initialized...</div>
+              <div>[{new Date().toISOString()}] Loading ETF Sector Weights (13 Sectors)...</div>
+              <div>[{new Date().toISOString()}] Connecting to macro-data-provider: Yahoo Finance...</div>
+              <div className="text-blue-neon">[{new Date().toISOString()}] INFO: System running in Simulation Mode (No API detected)</div>
+              <div className="text-[#8888aa]">[{new Date().toISOString()}] Sincronizando con GitHub Repository (josemikel74/prometheus)...</div>
+              <div>[{new Date().toISOString()}] Waiting for global refresh command...</div>
+            </div>
+          </motion.div>
+
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
+            transition={{ delay: 1.5 }}
             className="mt-10 text-[#444466] text-xs text-center flex flex-col items-center gap-4"
           >
             <span className="animate-bounce">Navega usando el menú lateral izquierdo ←</span>

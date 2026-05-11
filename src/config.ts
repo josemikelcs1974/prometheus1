@@ -1,12 +1,13 @@
 /**
- * src/config.ts — Fuente Única de Verdad (React Version)
- * Replicando exactamente el config.py para consistencia del sistema.
+ * src/config.ts — FUENTE ÚNICA DE VERDAD (PROMETHEUS v2.0.0)
+ * Sincronización exacta con los requerimientos técnicos de la arquitectura.
  */
 
 export const SYSTEM_NAME = "PROMETHEUS";
 export const SYSTEM_SUBTITLE = "ETF Rotation Intelligence System";
 export const SYSTEM_VERSION = "2.0.0";
 
+// --- CONFIGURACIÓN DE UI (BLOOMBERG STYLE) ---
 export const COLORS = {
   bg_main: "#050508",
   bg_secondary: "#0d0d14",
@@ -21,15 +22,7 @@ export const COLORS = {
   border: "#1a1a2e",
 };
 
-export const REFRESH_OPTIONS = {
-  "OFF": 0,
-  "30 seg": 30,
-  "1 min": 60,
-  "5 min": 300,
-};
-
-export const DEFAULT_REFRESH = "1 min";
-
+// --- ESTRUCTURA DEL UNIVERSO ETF ---
 export const ETF_UNIVERSE = {
   TECHNOLOGY: ["XLK", "QQQ", "VGT", "SOXX", "SMH", "IGV", "FTEC", "IYW", "CIBR", "WCLD"],
   FINANCIALS: ["XLF", "VFH", "KRE", "KBE", "IAI", "IYF", "KBWB", "FNCL", "RYF", "FINU"],
@@ -46,6 +39,7 @@ export const ETF_UNIVERSE = {
   ALTERNATIVES: ["GLD", "IAU", "SLV", "PDBC", "DJP", "DBMF", "KMLM", "BNO", "UNG", "CPER"],
 };
 
+// --- MACRO INDICATORS ---
 export const MACRO_TICKERS = {
   "S&P 500": "^GSPC",
   "NASDAQ 100": "QQQ",
@@ -56,3 +50,44 @@ export const MACRO_TICKERS = {
   "Oro": "GLD",
   "Bitcoin": "BTC-USD",
 };
+
+// --- PESOS DE MOMENTUM (Lógica Institucional) ---
+export const MOMENTUM_WEIGHTS = {
+  W1M: 0.40, // 40% peso corto plazo
+  W3M: 0.30, 
+  W6M: 0.20,
+  W12M: 0.10, // 10% peso largo plazo
+};
+
+// --- FASES DEL CICLO MACRO ---
+export const CYCLE_PHASES = {
+  EXPANSION: { 
+    name: "Expansión", 
+    desc: "Crecimiento acelerado. Bullish Tech/Disc.",
+    top_sectors: ["TECHNOLOGY", "CONSUMER_DISC", "FINANCIALS"] 
+  },
+  PEAK: { 
+    name: "Pico", 
+    desc: "Máximo crecimiento, inflación subiendo. Reequilibrio a Energía.",
+    top_sectors: ["ENERGY", "MATERIALS", "INDUSTRIALS"] 
+  },
+  CONTRACTION: { 
+    name: "Contracción", 
+    desc: "Ralentización. Bearish. Refugio en Defensive.",
+    top_sectors: ["HEALTHCARE", "CONSUMER_STAPLES", "UTILITIES"] 
+  },
+  RECOVERY: { 
+    name: "Recuperación", 
+    desc: "Saliendo del pozo. Early bull Financials.",
+    top_sectors: ["FINANCIALS", "REAL_ESTATE", "COMM_SERVICES"] 
+  },
+};
+
+export const REFRESH_OPTIONS = {
+  "OFF": 0,
+  "30 seg": 30,
+  "1 min": 60,
+  "5 min": 300,
+};
+
+export const DEFAULT_REFRESH = "1 min";

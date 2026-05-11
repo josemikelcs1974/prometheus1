@@ -10,11 +10,20 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // API placeholders (for future phases)
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", system: "PROMETHEUS", version: "2.0.0" });
+  // Middleware
+  app.use(express.json());
+
+  // API Routes - PROMETHEUS Core Interface
+  app.get("/api/v1/health", (req, res) => {
+    res.json({ 
+      status: "online", 
+      system: "PROMETHEUS", 
+      version: "2.0.0",
+      timestamp: new Date().toISOString()
+    });
   });
 
+  // Vite Integration
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -22,7 +31,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.resolve(__dirname, "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
@@ -30,8 +39,16 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`PROMETHEUS Core running on http://localhost:${PORT}`);
+    console.log(`
+  ⚡ PROMETHEUS CORE ACTIVATED
+  ----------------------------
+  Terminal: http://0.0.0.0:${PORT}
+  Ambiente: ${process.env.NODE_ENV || 'development'}
+    `);
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error("CRITICAL SYSTEM FAILURE:", err);
+  process.exit(1);
+});
