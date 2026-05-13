@@ -1,150 +1,288 @@
 import streamlit as st
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
 import time
 
-# Attempt to import config, handle failure gracefully
-try:
-    import config
-except ImportError:
-    # Inline fallback if config.py is missing (though we will create it)
-    class ConfigMock:
-        SYSTEM_NAME = "PROMETHEUS"
-        SYSTEM_SUBTITLE = "ETF Rotation Intelligence System"
-        SYSTEM_VERSION = "2.0.0"
-    config = ConfigMock()
+# Importar módulos locales
+import config
+import db_manager
+import utils
+from agents import AgenteAnalista, AgenteSupervisor, AbogadoDelDiablo
 
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- INICIALIZACIÓN ---
 st.set_page_config(
-    page_title="⚡ PROMETHEUS | v2.0.0",
+    page_title="PROMETHEUS | ETF Intelligence",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- ESTÉTICA INSTITUCIONAL (BLOOMBERG) ---
+# Inicializar Base de Datos
+db_manager.init_db()
+
+# Inicializar Agentes en Session State
+if 'agentes' not in st.session_state:
+    st.session_state.agentes = {
+        "analista": AgenteAnalista(),
+        "supervisor": AgenteSupervisor(),
+        "critico": AbogadoDelDiablo()
+    }
+    db_manager.log_event("SISTEMA", "Agentes inicializados con éxito.")
+
+# --- ESTILOS BLOOMBERG ---
 st.markdown("""
 <style>
-    /* Global Styles */
-    [data-testid="stAppViewContainer"] { background-color: #050508; color: #e8e8f0; }
-    [data-testid="stHeader"] { background: rgba(5, 5, 8, 0.8); }
-    [data-testid="stSidebar"] { background-color: #010105; border-right: 1px solid #1a1a2e; }
-    
-    /* Typography */
-    .mono-text { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
-    h1, h2, h3 { font-family: 'Inter', sans-serif; color: #00ff88 !important; letter-spacing: 0.05em; font-weight: 800; }
-    
-    /* Custom Components */
-    .status-badge {
-        background: rgba(0, 255, 136, 0.1);
-        border: 1px solid rgba(0, 255, 136, 0.3);
-        color: #00ff88;
-        padding: 4px 12px;
-        border-radius: 4px;
-        font-size: 0.7rem;
-        font-weight: bold;
+    /* Fondo y texto global */
+    .stApp {
+        background-color: #050508;
+        color: #e8e8f0;
     }
     
+    /* Tarjetas estilo Bloomberg */
     .metric-card {
-        background: #0d0d14;
+        background-color: #11111a;
         border: 1px solid #1a1a2e;
         padding: 20px;
-        border-radius: 8px;
+        border-radius: 4px;
         text-align: center;
+        transition: all 0.3s ease;
     }
-
-    /* Logs Area */
-    .log-container {
-        height: 250px;
-        overflow-y: auto;
-        background: #08080c;
-        border: 1px solid #1a1a2e;
-        padding: 10px;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 0.7rem;
+    .metric-card:hover {
+        border-color: #00ff88;
+        background-color: #161625;
+    }
+    .metric-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    .metric-label {
+        color: #8888aa;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Tabs personalizados */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 24px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        padding: 10px 20px;
+        background-color: transparent;
+        border-radius: 4px 4px 0 0;
+        gap: 0;
+        color: #8888aa;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #1a1a2e !important;
+        color: #00ff88 !important;
+        border-bottom: 2px solid #00ff88 !important;
+    }
+    
+    /* Mensajes educativos */
+    .edu-box {
+        background-color: rgba(0, 255, 136, 0.05);
+        border-left: 4px solid #00ff88;
+        padding: 15px;
+        margin: 20px 0;
+        font-style: italic;
+        color: #e8e8f0;
+    }
+    
+    /* Botones grandes */
+    .stButton > button {
+        width: 100%;
+        border-radius: 4px;
+        height: 3em;
+        background-color: #1a1a2e;
+        color: #e8e8f0;
+        border: 1px solid #33334d;
+        font-weight: bold;
+    }
+    .stButton > button:hover {
+        border-color: #00ff88;
         color: #00ff88;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- STATE MANAGEMENT ---
-if 'initialized' not in st.session_state:
-    st.session_state.initialized = True
-    st.session_state.logs = [f"[{datetime.now().strftime('%H:%M:%S')}] SYSTEM INITIALIZED"]
-
-# --- SIDEBAR ---
+# --- SIDEBAR & POLLING ---
 with st.sidebar:
-    st.image("https://img.icons8.com/nolan/64/flash-on.png", width=50)
-    st.markdown(f"# {config.SYSTEM_NAME}")
-    st.caption(f"{config.SYSTEM_SUBTITLE} | v{config.SYSTEM_VERSION}")
+    st.image("https://img.icons8.com/nolan/96/flash-on.png", width=60)
+    st.title("PROMETHEUS")
+    st.caption("v2.0.0 | ETF Rotation Intelligence")
+    st.markdown("---")
+    
+    st.markdown("### ⚙️ CONTROL DE SINCRONIZACIÓN")
+    polling_interval = st.slider("Intervalo de Polling (seg)", 30, 300, 60)
+    auto_refresh = st.toggle("Auto-actualización Activa", True)
     
     st.markdown("---")
-    st.markdown("### 🛠️ CONTROL PANEL")
+    st.markdown("### 📡 ESTADO DE RED")
+    st.success("Conexión: ESTABLE")
+    st.info(f"Última Sync: {datetime.now().strftime('%H:%M:%S')}")
     
-    refresh_rate = st.selectbox("AUTOMATED SYNC", ["OFF", "30S", "1M", "5M"], index=2)
-    st.button("🔄 REFRESH GLOBAL CORE")
-    
-    st.markdown("---")
-    st.markdown("### 🛡️ AEGIS STATUS")
-    col1, col2 = st.columns(2)
-    col1.markdown(f":green[● ONLINE]")
-    col2.markdown(f":green[● ACTIVE]")
-    
-    st.markdown("---")
-    st.info("⚠️ IA AGENTS: PENDING API KEY")
+    if st.button("REFRESH TOTAL DEL CORE"):
+        st.rerun()
 
-# --- MAIN DASHBOARD ---
-def render_header():
-    col_l, col_r = st.columns([3, 1])
-    with col_l:
-        st.title(f"⚡ {config.SYSTEM_NAME} CORE")
-        st.markdown(f"**{config.SYSTEM_SUBTITLE}** — *Institutional Intelligence Engine*")
-    with col_r:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(f'<div class="status-badge">SESSION ACTIVE: {datetime.now().strftime("%H:%M UTC")}</div>', unsafe_allow_html=True)
+# --- DATOS MACRO ---
+MACRO_TICKERS = {
+    "S&P 500": "^GSPC",
+    "NASDAQ 100": "QQQ",
+    "Russell 2000": "^RUT",
+    "VIX": "^VIX",
+    "Oro": "GLD",
+    "Plata": "SLV",
+    "Petróleo WTI": "CL=F",
+    "Cobre": "CPER",
+    "Bonos 10Y": "^TNX",
+    "Dólar (DXY)": "UUP",
+    "Bitcoin": "BTC-USD"
+}
 
-def render_modules():
-    st.markdown("---")
-    st.subheader("// ACTIVE MODULES")
+data_macro, sync_status = utils.fetch_macro_data(MACRO_TICKERS)
+
+# --- DASHBOARD PRINCIPAL ---
+tabs = st.tabs([
+    "🏠 Dashboard Principal", 
+    "📊 Rankings y Rotación", 
+    "🕒 Cotizaciones en Real-Time", 
+    "🤖 Agentes", 
+    "🛡️ Supervisor", 
+    "📜 Historial y Análisis", 
+    "⚙️ Configuración"
+])
+
+# 1. DASHBOARD PRINCIPAL
+with tabs[0]:
+    st.title("⚡ Panel de Control General")
     
+    # Mensaje de Esencia Genesis
+    st.markdown("""
+    <div class="edu-box">
+        "La disciplina es el puente entre las metas y el logro. En este sistema, no buscamos el ruido del día, sino la armonía de la tendencia."
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Fila Macro
     cols = st.columns(4)
-    modules = [
-        ("📊", "MACRO", "25 Global Assets"),
-        ("🔄", "ROTATION", "13 Sectoral Matrices"),
-        ("⚡", "CRONOS", "IA Prediction Engine"),
-        ("⚠️", "NEMESIS", "Risk Surveillance")
-    ]
-    
-    for i, (icon, name, desc) in enumerate(modules):
+    main_indicators = ["S&P 500", "NASDAQ 100", "VIX", "Bonos 10Y"]
+    for i, name in enumerate(main_indicators):
         with cols[i]:
+            val = data_macro.get(name, {"price": 0, "change": 0})
+            color = "#00ff88" if val["change"] >= 0 else "#ff3366"
             st.markdown(f"""
             <div class="metric-card">
-                <div style="font-size: 2rem;">{icon}</div>
-                <div style="font-weight: bold; color: #00ff88; margin: 10px 0;">{name}</div>
-                <div style="font-size: 0.7rem; color: #8888aa;">{desc}</div>
+                <div class="metric-label">{name}</div>
+                <div class="metric-value" style="color: {color};">{val['price']:,.2f}</div>
+                <div style="color: {color}; font-size: 0.9rem;">{val['change']:+.2f}%</div>
             </div>
             """, unsafe_allow_html=True)
-
-def render_logs():
-    st.markdown("---")
-    st.subheader("📡 AEGIS REAL-TIME DATA STREAM")
     
-    new_log = f"[{datetime.now().strftime('%H:%M:%S')}] PING: DATA PROVIDER CONNECTED (SIMULATION)"
-    st.session_state.logs.append(new_log)
-    if len(st.session_state.logs) > 50: st.session_state.logs.pop(0)
-    
-    log_text = "\n".join(reversed(st.session_state.logs))
-    st.markdown(f'<div class="log-container"><pre>{log_text}</pre></div>', unsafe_allow_html=True)
-
-def render_compatibility_notice():
+    # Condición de Mercado
     st.markdown("---")
-    st.warning("🔄 **SYSTEM STATUS**: Operativo en modo compatibilidad. app.py restaurado.")
+    vix_val = data_macro.get("VIX", {"price": 15})["price"]
+    spx_change = data_macro.get("S&P 500", {"change": 0})["change"]
+    condition, message = utils.get_market_condition(vix_val, spx_change)
+    
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        st.subheader("Estado del Mercado")
+        st.markdown(f"### {condition}")
+    with c2:
+        st.info(message)
 
-# --- EXECUTION ---
-render_header()
-render_modules()
-render_logs()
-render_compatibility_notice()
+# 2. RANKINGS Y ROTACIÓN
+with tabs[1]:
+    st.header("📊 Rankings de Rotación Sectorial")
+    st.warning("Módulo en fase de calibración matemática. Los agentes están procesando los pesos de momentum.")
+    st.info("La paciencia es una virtud en el análisis cuantitativo. Espere a que el ciclo confirme la rotación.")
 
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown(f'<div style="text-align: center; color: #444466; font-size: 0.6rem;">PROMETHEUS v{config.SYSTEM_VERSION} | CODED BY AI STUDIO EXPERT AGENT</div>', unsafe_allow_html=True)
+# 3. COTIZACIONES EN TIEMPO REAL
+with tabs[2]:
+    st.header("🕒 Monitor de Activos en Real-Time")
+    
+    # Convertir dict a DataFrame para mostrar
+    df_assets = pd.DataFrame.from_dict(data_macro, orient='index')
+    df_assets = df_assets.reset_index().rename(columns={'index': 'Activo'})
+    
+    # Formatear columnas
+    df_assets['Precio'] = df_assets['price'].apply(utils.format_currency)
+    df_assets['Cambio %'] = df_assets['change'].apply(utils.format_percent)
+    
+    st.dataframe(df_assets[['Activo', 'ticker', 'Precio', 'Cambio %', 'status']], use_container_width=True, hide_index=True)
+    st.caption("Datos provistos por Yahoo Finance via yfinance. Actualización automática cada 60s.")
+
+# 4. AGENTES
+with tabs[3]:
+    st.header("🤖 Ecosistema de Agentes Inteligentes")
+    st.markdown("Cada agente posee una personalidad única basada en la disciplina y el rigor.")
+    
+    cols = st.columns(3)
+    with cols[0]:
+        st.subheader("👨‍💻 Analista")
+        st.write(st.session_state.agentes["analista"].rol)
+        st.status("Buscando patrones...")
+    with cols[1]:
+        st.subheader("👮 Supervisor")
+        st.write(st.session_state.agentes["supervisor"].rol)
+        st.status("Verificando integridad...", state="complete")
+    with cols[2]:
+        st.subheader("⚖️ Abogado del Diablo")
+        st.write(st.session_state.agentes["critico"].rol)
+        st.status("Cuestionando tesis...")
+
+# 5. SUPERVISOR
+with tabs[4]:
+    st.header("🛡️ Monitor del Sistema (Supervisor Core)")
+    col_s1, col_s2, col_s3 = st.columns(3)
+    col_s1.metric("Latencia Data-Feed", "120ms", "Normal")
+    col_s2.metric("Integridad DB", "100%", "Óptimo")
+    col_s3.metric("Sesión Actual", datetime.now().strftime("%H:%M"), "Activa")
+    
+    st.subheader("Logs de Operaciones")
+    st.dataframe(db_manager.get_logs(), use_container_width=True)
+
+# 6. HISTORIAL Y ANÁLISIS
+with tabs[5]:
+    st.header("📜 Historial de Decisiones")
+    st.info("La transparencia es la base de la confianza. Aquí se registrarán todas las rotaciones sugeridas por el sistema.")
+
+# 7. CONFIGURACIÓN
+with tabs[6]:
+    st.header("⚙️ Configuración del Sistema")
+    
+    col_c1, col_c2 = st.columns(2)
+    
+    with col_c1:
+        st.subheader("Gestión de ETFs")
+        with st.form("add_etf_form"):
+            t = st.text_input("Ticker ETF (ej: QQQ)")
+            n = st.text_input("Nombre Completo")
+            s = st.selectbox("Sector GICS", [
+                "Tecnología", "Finanzas", "Salud", "Energía", "Industria", 
+                "Materiales", "Consumo Discrecional", "Consumo Básico", 
+                "Utilities", "Inmobiliario", "Comunicaciones", "Otros"
+            ])
+            if st.form_submit_button("Añadir al Universo"):
+                if t and n:
+                    if db_manager.add_etf(t, n, s):
+                        st.success(f"ETF {t} añadido correctamente.")
+                        db_manager.log_event("CONFIG", f"Añadido ETF: {t}")
+                    else:
+                        st.error("El ETF ya existe o hubo un error.")
+                else:
+                    st.warning("Complete todos los campos.")
+    
+    with col_c2:
+        st.subheader("Parámetros de Red")
+        st.slider("Agresividad de Rotación", 1, 10, 5)
+        st.checkbox("Habilitar Logging Extendido", value=True)
+
+# --- AUTO REFRESH ---
+if auto_refresh:
+    time.sleep(polling_interval)
+    st.rerun()

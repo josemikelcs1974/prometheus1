@@ -1,29 +1,10 @@
 {
-  "name": "prometheus-dashboard",
-  "private": true,
+  "name": "prometheus-streamlit",
   "version": "2.0.0",
-  "type": "module",
+  "description": "ETF Rotation Intelligence System Phase 1",
   "scripts": {
-    "dev": "vite --port 3000 --host 0.0.0.0",
-    "build": "tsc && vite build",
-    "lint": "tsc --noEmit",
-    "preview": "vite preview --port 3000 --host 0.0.0.0"
+    "dev": "streamlit run app.py --server.port 3000 --server.address 0.0.0.0",
+    "start": "streamlit run app.py --server.port 3000 --server.address 0.0.0.0"
   },
-  "dependencies": {
-    "lucide-react": "^0.344.0",
-    "motion": "^11.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.1"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "@vitejs/plugin-react": "^4.2.1",
-    "tailwindcss": "^4.1.0-beta.2",
-    "typescript": "^5.2.2",
-    "vite": "^5.2.0"
-  }
+  "dependencies": {}
 }
